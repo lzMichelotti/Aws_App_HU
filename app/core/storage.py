@@ -1,7 +1,7 @@
-"""Cliente do Cloudflare R2 (S3-compatível) para as fotos do fórum.
+"""S3 client for forum photos (Cloudflare R2 or AWS S3).
 
-As chaves do R2 ficam só aqui no backend. O app nunca as vê: recebe uma
-presigned URL e sobe o arquivo direto pro R2.
+Bucket credentials live only here in the backend. The app never sees them: it
+gets a presigned URL and uploads the file straight to the bucket.
 """
 import uuid
 from functools import lru_cache
@@ -28,23 +28,30 @@ class StorageError(RuntimeError):
 
 def configurado() -> bool:
     return all((
-        settings.R2_ACCOUNT_ID,
         settings.R2_ACCESS_KEY_ID,
         settings.R2_SECRET_ACCESS_KEY,
         settings.R2_BUCKET_NAME,
     ))
 
 
+def _endpoint_url() -> Optional[str]:
+    if settings.STORAGE_ENDPOINT_URL:
+        return settings.STORAGE_ENDPOINT_URL
+    if settings.R2_ACCOUNT_ID:
+        return f"https://{settings.R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
+    return None
+
+
 @lru_cache
 def _client():
     if not configurado():
-        raise StorageError("R2 não configurado: defina as variáveis R2_* no .env.")
+        raise StorageError("Storage not configured: set the R2_* variables in .env.")
     return boto3.client(
         "s3",
-        endpoint_url=f"https://{settings.R2_ACCOUNT_ID}.r2.cloudflarestorage.com",
+        endpoint_url=_endpoint_url(),
         aws_access_key_id=settings.R2_ACCESS_KEY_ID,
         aws_secret_access_key=settings.R2_SECRET_ACCESS_KEY,
-        region_name="auto",
+        region_name=settings.STORAGE_REGION,
         config=Config(
             signature_version="s3v4",
             request_checksum_calculation="when_required",
@@ -87,7 +94,7 @@ def apagar_objeto_best_effort(key: str) -> None:
     try:
         _client().delete_object(Bucket=settings.R2_BUCKET_NAME, Key=key)
     except ClientError as e:
-        logger.warning("Falha ao apagar objeto R2 %s: %s", key, e)
+        logger.warning("Failed to delete object %s: %s", key, e)
 
 
 def url_publica(key: str) -> str:

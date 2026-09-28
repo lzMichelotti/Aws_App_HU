@@ -32,6 +32,11 @@ class Settings(BaseSettings):
     R2_BUCKET_NAME: str = ""
     R2_PUBLIC_BASE_URL: str = ""
 
+    # Empty + R2_ACCOUNT_ID set = R2 (the production .env does not need to change).
+    # Empty without R2_ACCOUNT_ID = AWS S3 — then STORAGE_REGION must be a real region.
+    STORAGE_ENDPOINT_URL: str = ""
+    STORAGE_REGION: str = "auto"
+
     R2_MAX_IMAGENS_POR_POST: int = 3
     R2_MAX_BYTES: int = 5 * 1024 * 1024
     R2_PRESIGN_EXPIRES: int = 300
