@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgis/postgis:15-3.5-alpine
+    container_name: horta_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: horta
+      POSTGRES_PASSWORD: horta1234
+      POSTGRES_DB: horta_db
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U horta -d horta_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:

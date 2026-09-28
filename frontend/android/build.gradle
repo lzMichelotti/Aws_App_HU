@@ -1,0 +1,39 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+
+buildscript {
+    
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.13.0'
+        classpath 'com.google.gms:google-services:4.4.4'
+
+        // NOTE: Do not place your application dependencies here; they belong
+        // in the individual module build.gradle files
+    }
+}
+
+// AGP 8.13 exige JDK 17+ e o Gradle 8.14 roda em Java até 24. O PATH herdado do
+// Windows expõe um JDK 25, que quebraria o build com erro ilegível.
+def javaMajor = JavaVersion.current().majorVersion.toInteger()
+if (javaMajor < 17 || javaMajor > 24) {
+    throw new GradleException(
+        "Este build precisa de JDK 17 a 24 (achei ${javaMajor} em ${System.getProperty('java.home')}).\n" +
+        "Use: export JAVA_HOME=~/tools/jdk21"
+    )
+}
+
+apply from: "variables.gradle"
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}
